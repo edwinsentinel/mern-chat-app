@@ -4,6 +4,7 @@ import generateTokenAndSetCookie from "../utils/generateToken.js";
 
 
 /// @desc    Register a new user
+/// @route   POST /api/auth/signup
 export const signup = async (req, res) => {
  try {
     const {fullName,username,password,confirmPassword,gender} =req.body;
@@ -58,10 +59,44 @@ export const signup = async (req, res) => {
  }
 }
 
-export const login = (req, res) => {
- console.log("login user");
+
+/// @desc    Login user
+/// @route   POST /api/auth/login
+export const login = async(req, res) => {
+try {
+    const {username, password} = req.body;
+    const user= await User.findOne({username});
+    const isPasswordValid = await bcrypt.compare(password, user?.password || "");
+    if(!user || !isPasswordValid){
+        return res.status(400).json({message:"Invalid username or password"});
+    }
+    //generate JWT token
+    generateTokenAndSetCookie(user._id, res);
+    res.status(200).json({
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        profilePic: user.profilePic
+    });
+    
+} catch (error) {
+    console.error("Error login controller:", error.message);
+    res.status(500).json({message:"Internal server error"});
+    
+}
 }
 
-export const logout = (req, res) => {
- console.log("logout user");
+
+/// @desc    Logout user
+/// @route   POST /api/auth/logout
+export const logout = async(req, res) => {
+ try {
+    res.cookie("jwt",{maxAge: 0});
+    res.status(200).json({message:"Logged out successfully"});
+    //res.clearCookie("jwt");
+    
+ } catch (error) {
+    console.error("Error logout controller:", error.message);
+    res.status(500).json({message:"Internal server error"});
+ }
 }
