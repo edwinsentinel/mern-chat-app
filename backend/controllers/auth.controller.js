@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
 
 
 /// @desc    Register a new user
@@ -16,7 +17,7 @@ export const signup = async (req, res) => {
     }
     //HASH PASSWORD
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);//hash password
 
     //https://avatar-placeholder.iran.liara.run/avatar/200/200/any
 
@@ -31,7 +32,10 @@ export const signup = async (req, res) => {
         gender,
         profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
     });
-
+    //save user to database
+    if(newUser){
+        //generate JWT token
+    generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
     res.status(201).json({
         _id: newUser._id,
@@ -39,6 +43,13 @@ export const signup = async (req, res) => {
         username: newUser.username,
         profilePic: newUser.profilePic
     });
+}
+    else{
+        res.status(400).json({message:"Invalid user data"});
+    }
+    //res.status(201).json({message:"User created successfully"});
+    //res.status(201).json(newUser);
+    //console.log("User created successfully", newUser);
 
 
  } catch (error) {
